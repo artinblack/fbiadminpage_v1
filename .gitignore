@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.code-workspace
+
+# Logs
+*.log
+
+# Temp screenshots (local only)
+temporary screenshots/
