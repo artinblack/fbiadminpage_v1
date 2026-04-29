@@ -76,7 +76,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .config-box code { background: white; border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 11.5px; color: var(--navy); font-family: monospace; }
 
 /* ── STATS ── */
-.stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 1.75rem; }
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 1.75rem; }
 .stat-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.3rem; }
 .stat-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
 .stat-value { font-family: var(--font-display); font-size: 2rem; color: var(--navy); font-weight: 600; line-height: 1; }
@@ -158,6 +158,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .skeleton { background: linear-gradient(90deg, var(--bg) 25%, #e8edf4 50%, var(--bg) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
+@media(max-width:900px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+}
 @media(max-width:700px) {
   .stats-row { grid-template-columns: 1fr 1fr; }
   .order-card-body { grid-template-columns: 1fr; }
@@ -180,7 +183,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 <div id="screen-login" class="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
-      <img src="https://fbi-apostille-page.vercel.app/brand_assets/logo.jpeg" alt="FBI Apostille"/>
+      <img src="brand_assets/logo.jpeg" alt="FBI Apostille"/>
       <div>
         <div class="auth-logo-label">FBI APOSTILLE</div>
         <div class="auth-logo-sub">Admin Panel</div>
@@ -203,7 +206,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 
   <div class="admin-topbar">
     <a class="topbar-logo" href="https://fbi-apostille-page.vercel.app" title="Back to site">
-      <img src="https://fbi-apostille-page.vercel.app/brand_assets/logo.jpeg" alt="FBI Apostille"/>
+      <img src="brand_assets/logo.jpeg" alt="FBI Apostille"/>
     </a>
     <div class="topbar-divider"></div>
     <div class="topbar-title">Admin Panel</div>
@@ -215,11 +218,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </button>
       <div class="topbar-divider"></div>
       <a class="btn-quicklink" href="https://docs.google.com/spreadsheets/d/1RodjejzCErdaQhTJpT6KBa728-p0KAO0jXiLLVsI3iU/edit?gid=1739181333#gid=1739181333" target="_blank" rel="noopener" title="Open Spreadsheet">
-        <img src="https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp/ic_product_sheets_colored_32dp.png" alt="Sheets"/>
+        <img src="brand_assets/sheets.png" alt="Sheets"/>
         Sheets
       </a>
       <a class="btn-quicklink" href="https://drive.google.com/drive/folders/1XFqz8MLz7U4IlwyLcI8UL3jgnU6ohpgd" target="_blank" rel="noopener" title="Open Drive Folder">
-        <img src="https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp/ic_product_drive_colored_32dp.png" alt="Drive"/>
+        <img src="brand_assets/google-drive.png" alt="Drive"/>
         Drive
       </a>
       <div class="topbar-divider"></div>
@@ -242,19 +245,24 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
     <!-- Stats -->
     <div class="stats-row">
       <div class="stat-card">
-        <div class="stat-label">Pending Zelle</div>
-        <div class="stat-value orange" id="stat-pending">—</div>
-        <div class="stat-sub">awaiting your verification</div>
+        <div class="stat-label">PayPal Balance</div>
+        <div class="stat-value green" id="stat-paypal-balance">—</div>
+        <div class="stat-sub">confirmed PayPal payments</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Amount Pending</div>
-        <div class="stat-value" id="stat-pending-amt">—</div>
-        <div class="stat-sub">unconfirmed Zelle revenue</div>
+        <div class="stat-label">Zelle Balance</div>
+        <div class="stat-value" style="color:var(--zelle)" id="stat-zelle-balance">—</div>
+        <div class="stat-sub">confirmed Zelle payments</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Confirmed Today</div>
-        <div class="stat-value green" id="stat-paid-today">—</div>
-        <div class="stat-sub">Zelle payments verified</div>
+        <div class="stat-label">Total Amount</div>
+        <div class="stat-value green" id="stat-total">—</div>
+        <div class="stat-sub">all confirmed revenue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Due Amount</div>
+        <div class="stat-value orange" id="stat-due">—</div>
+        <div class="stat-sub">pending / unconfirmed</div>
       </div>
     </div>
 
@@ -438,14 +446,26 @@ function renderAll() {
 }
 
 function updateStats() {
-  const zelleP = allOrders.filter(o => o.payment_method === 'zelle' && o.status === 'pending');
-  const pendAmt = zelleP.reduce((s, o) => s + parseFloat((o.order_total || '0').replace(/[^0-9.]/g, '')), 0);
-  const today   = new Date().toDateString();
-  const paidToday = allOrders.filter(o => o.status === 'paid' && new Date(o.confirmed_at || o.submitted_at).toDateString() === today);
+  const amt = o => parseFloat((o.order_total || '0').replace(/[^0-9.]/g, ''));
 
-  document.getElementById('stat-pending').textContent     = zelleP.length;
-  document.getElementById('stat-pending-amt').textContent = '$' + pendAmt.toFixed(2);
-  document.getElementById('stat-paid-today').textContent  = paidToday.length;
+  const paypalBalance = allOrders
+    .filter(o => o.payment_method === 'paypal' && o.status === 'paid')
+    .reduce((s, o) => s + amt(o), 0);
+
+  const zelleBalance = allOrders
+    .filter(o => o.payment_method === 'zelle' && o.status === 'paid')
+    .reduce((s, o) => s + amt(o), 0);
+
+  const total = paypalBalance + zelleBalance;
+
+  const due = allOrders
+    .filter(o => o.status === 'pending')
+    .reduce((s, o) => s + amt(o), 0);
+
+  document.getElementById('stat-paypal-balance').textContent = '$' + paypalBalance.toFixed(2);
+  document.getElementById('stat-zelle-balance').textContent  = '$' + zelleBalance.toFixed(2);
+  document.getElementById('stat-total').textContent          = '$' + total.toFixed(2);
+  document.getElementById('stat-due').textContent            = '$' + due.toFixed(2);
 }
 
 function updateCounts() {
