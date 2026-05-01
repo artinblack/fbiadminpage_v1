@@ -242,30 +242,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">PayPal Balance</div>
-        <div class="stat-value green" id="stat-paypal-balance">—</div>
-        <div class="stat-sub">confirmed PayPal payments</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Zelle Balance</div>
-        <div class="stat-value" style="color:var(--zelle)" id="stat-zelle-balance">—</div>
-        <div class="stat-sub">confirmed Zelle payments</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Amount</div>
-        <div class="stat-value green" id="stat-total">—</div>
-        <div class="stat-sub">all confirmed revenue</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Due Amount</div>
-        <div class="stat-value orange" id="stat-due">—</div>
-        <div class="stat-sub">pending / unconfirmed</div>
-      </div>
-    </div>
-
     <!-- Filter tabs -->
     <div class="filter-row">
       <button class="filter-tab active" onclick="setFilter('all',this)">All <span class="tab-count" id="cnt-all">0</span></button>
@@ -440,32 +416,8 @@ async function loadOrders() {
 // RENDER
 // ─────────────────────────────────────────
 function renderAll() {
-  updateStats();
   updateCounts();
   renderOrders();
-}
-
-function updateStats() {
-  const amt = o => parseFloat((o.order_total || '0').replace(/[^0-9.]/g, ''));
-
-  const paypalBalance = allOrders
-    .filter(o => o.payment_method === 'paypal' && o.status === 'paid')
-    .reduce((s, o) => s + amt(o), 0);
-
-  const zelleBalance = allOrders
-    .filter(o => o.payment_method === 'zelle' && o.status === 'paid')
-    .reduce((s, o) => s + amt(o), 0);
-
-  const total = paypalBalance + zelleBalance;
-
-  const due = allOrders
-    .filter(o => o.status === 'pending')
-    .reduce((s, o) => s + amt(o), 0);
-
-  document.getElementById('stat-paypal-balance').textContent = '$' + paypalBalance.toFixed(2);
-  document.getElementById('stat-zelle-balance').textContent  = '$' + zelleBalance.toFixed(2);
-  document.getElementById('stat-total').textContent          = '$' + total.toFixed(2);
-  document.getElementById('stat-due').textContent            = '$' + due.toFixed(2);
 }
 
 function updateCounts() {

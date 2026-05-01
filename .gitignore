@@ -13,3 +13,6 @@ Thumbs.db
 temporary screenshots/
 
 .vercel
+
+# Next.js sub-project (not part of this repo)
+fbi_apostille_admin_page/
