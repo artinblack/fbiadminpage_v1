@@ -227,6 +227,7 @@ body {
 .cell-customer { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cust-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cust-email { font-family: var(--font-m); font-size: 10.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cust-phone { font-size: 10.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .method-badge {
   display: inline-flex; align-items: center; gap: 4px;
@@ -746,7 +747,7 @@ function rowHTML(o, idx) {
 
   return `<div class="tgrid order-row s-${status}" style="animation-delay:${idx*.065}s" onclick="openOverlay('${ref}')">
     <div class="cell-ref"><span class="ref-id">${ref}</span><span class="ref-time">${fmtS(o.submitted_at)}</span></div>
-    <div class="cell-customer"><span class="cust-name">${o.first_name||''} ${o.last_name||''}</span><span class="cust-email">${o.email||'—'}</span></div>
+    <div class="cell-customer"><span class="cust-name">${o.first_name||''} ${o.last_name||''}</span><span class="cust-email">${o.email||'—'}</span>${o.phone?`<span class="cust-phone">${o.phone}</span>`:''}</div>
     <div class="col-method"><span class="method-badge ${isZ?'zelle':'paypal'}">${isZ?'Zelle':'PayPal'}</span></div>
     <div class="cell-amount col-amount"><span class="amt-val">${o.order_total||'—'}</span><span class="amt-plan">${o.plan_label||'—'}</span></div>
     <div class="cell-country col-country-h"><span class="cflag">${flag(o.destination_country)}</span><span>${o.destination_country||'—'}</span></div>
