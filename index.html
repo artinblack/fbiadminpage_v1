@@ -600,8 +600,10 @@ function normalizeOrder(raw) {
   const method      = (raw['PAYMENT METHOD'] || raw.payment_method || '').toLowerCase().trim();
 
   let status;
-  if (statusField.includes('paid') || statusField.includes('confirm')) status = 'paid';
+  if (statusField.includes('paid') || statusField.includes('confirm'))   status = 'paid';
   else if (statusField.includes('cancel'))                               status = 'cancelled';
+  else if (payConfirm.includes('paid zelle'))                            status = 'paid';
+  else if (payConfirm.includes('order void'))                            status = 'cancelled';
   else if (method === 'paypal')                                          status = 'paid';
   else if (payConfirm.includes('pending'))                               status = 'pending';
   else                                                                   status = 'pending';
@@ -628,6 +630,7 @@ function normalizeOrder(raw) {
     payment_method:       method === 'paypal' ? 'paypal' : 'zelle',
     paypal_transaction_id: (paypalTx && paypalTx !== '—') ? paypalTx : null,
     status,
+    row_number:           raw.row_number || null,
     confirmed_at:         raw.confirmed_at || null,
     zelle_to:             (raw['ZELLE PAYMENT TO '] || raw['ZELLE PAYMENT TO'] || '').trim() || null,
     drive_link:           (raw['DRIVE FOLDER LINK'] || '').trim() || null,
@@ -850,16 +853,21 @@ async function confirmPayment() {
   btn.disabled = true; btn.textContent = 'Processing…';
 
   const confirmedAt = new Date().toISOString();
+  const order = allOrders.find(o => (o.order_ref||o.ref) === ref);
   if (CONFIRM_PAYMENT_URL) {
     try {
       await fetch(CONFIRM_PAYMENT_URL, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ ref, action:'mark_paid', confirmed_at:confirmedAt }),
+        body: JSON.stringify({
+          ref,
+          row_number:           order?.row_number ?? null,
+          payment_confirmation: 'paid zelle',
+          confirmed_at:         confirmedAt,
+        }),
       });
     } catch { showToast('n8n unreachable — saved locally only', 'error'); }
   }
 
-  const order = allOrders.find(o => (o.order_ref||o.ref) === ref);
   if (order) { order.status = 'paid'; order.confirmed_at = confirmedAt; }
   if (usingDemo) saveOv(ref, 'paid', confirmedAt);
 
@@ -874,15 +882,20 @@ async function confirmPayment() {
 async function cancelOrder(ref) {
   if (!confirm(`Cancel order ${ref}? This cannot be undone.`)) return;
   const cancelledAt = new Date().toISOString();
+  const order = allOrders.find(o => (o.order_ref||o.ref) === ref);
   if (CANCEL_ORDER_URL) {
     try {
       await fetch(CANCEL_ORDER_URL, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ ref, action:'cancel', cancelled_at:cancelledAt }),
+        body: JSON.stringify({
+          ref,
+          row_number:           order?.row_number ?? null,
+          payment_confirmation: 'ORDER VOID',
+          cancelled_at:         cancelledAt,
+        }),
       });
     } catch { showToast('n8n unreachable — saved locally only', 'error'); }
   }
-  const order = allOrders.find(o => (o.order_ref||o.ref) === ref);
   if (order) order.status = 'cancelled';
   if (usingDemo) saveOv(ref, 'cancelled');
   renderAll();
