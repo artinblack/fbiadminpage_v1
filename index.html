@@ -187,7 +187,7 @@ body {
 /* Table grid definition */
 .tgrid {
   display: grid;
-  grid-template-columns: 120px 1fr 72px 86px 86px 86px 130px 110px 86px 160px 72px;
+  grid-template-columns: 110px 1fr 64px 78px 78px 78px 78px 120px 100px 78px 150px 64px;
   gap: 0 12px; align-items: center;
 }
 
@@ -424,18 +424,18 @@ body {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1300px) {
-  .tgrid { grid-template-columns: 120px 1fr 72px 86px 86px 86px 86px 160px 72px; }
+  .tgrid { grid-template-columns: 110px 1fr 64px 78px 78px 78px 78px 78px 150px 64px; }
   .col-submitted, .col-country-h { display: none; }
 }
-@media (max-width: 1000px) {
-  .tgrid { grid-template-columns: 120px 1fr 72px 86px 86px 86px 86px 160px; }
+@media (max-width: 1050px) {
+  .tgrid { grid-template-columns: 110px 1fr 64px 78px 78px 78px 78px 78px 150px; }
   .col-drive { display: none; }
 }
 @media (max-width: 860px) {
   .tgrid { grid-template-columns: 1fr auto; gap: 8px; }
   .table-head { display: none; }
   .order-row { padding: 12px 16px; }
-  .col-method, .col-amount, .col-amtpaid, .col-dueamt, .col-country-h, .col-submitted, .col-drive { display: none; }
+  .col-method, .col-amount, .col-amtpaid, .col-dueamt, .col-totalamt, .col-country-h, .col-submitted, .col-drive { display: none; }
   .row-acts { flex-direction: column; gap: 4px; }
 }
 @media (max-width: 700px) {
@@ -516,6 +516,7 @@ body {
         <div class="col-amount">Amount</div>
         <div class="col-amtpaid">Amt Paid</div>
         <div class="col-dueamt">Due</div>
+        <div class="col-totalamt">Total</div>
         <div class="col-country-h">Destination</div>
         <div class="col-submitted">Submitted</div>
         <div>Status</div>
@@ -791,6 +792,7 @@ function rowHTML(o, idx) {
     <div class="cell-amount col-amount"><span class="amt-val">${o.order_total||'—'}</span><span class="amt-plan">${o.plan_label||'—'}</span></div>
     <div class="col-amtpaid"><span class="amt-val" style="font-size:13px;color:${o.amount_paid?'var(--green)':'var(--text-faint)'}">${o.amount_paid||'—'}</span></div>
     <div class="col-dueamt"><span class="amt-val" style="font-size:13px;color:${o.due_amount?'var(--amber)':'var(--text-faint)'}">${o.due_amount||'—'}</span></div>
+    <div class="col-totalamt"><span class="amt-val" style="font-size:13px">${o.order_total||'—'}</span></div>
     <div class="cell-country col-country-h"><span class="cflag">${flag(o.destination_country)}</span><span>${o.destination_country||'—'}</span></div>
     <div class="cell-submitted col-submitted">${fmt(o.submitted_at)}</div>
     <div><span class="status-badge ${status}"><span class="sdot"></span>${sLabel[status]||status}</span></div>
