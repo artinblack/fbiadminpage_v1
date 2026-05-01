@@ -792,7 +792,7 @@ function rowHTML(o, idx) {
     <div class="cell-amount col-amount"><span class="amt-val">${o.order_total||'—'}</span><span class="amt-plan">${o.plan_label||'—'}</span></div>
     <div class="col-amtpaid"><span class="amt-val" style="font-size:13px;color:${o.amount_paid?'var(--green)':'var(--text-faint)'}">${o.amount_paid||'—'}</span></div>
     <div class="col-dueamt"><span class="amt-val" style="font-size:13px;color:${o.due_amount?'var(--amber)':'var(--text-faint)'}">${o.due_amount||'—'}</span></div>
-    <div class="col-totalamt"><span class="amt-val" style="font-size:13px">${o.order_total||'—'}</span></div>
+    <div class="col-totalamt"><span class="amt-val" style="font-size:13px">${(()=>{const p=s=>{if(!s)return 0;const n=parseFloat(String(s).replace(/[^0-9.-]/g,''));return isNaN(n)?0:n;};const t=p(o.amount_paid)+p(o.due_amount);return(o.amount_paid||o.due_amount)?`$${t.toFixed(2)}`:'—';})()}</span></div>
     <div class="cell-country col-country-h"><span class="cflag">${flag(o.destination_country)}</span><span>${o.destination_country||'—'}</span></div>
     <div class="cell-submitted col-submitted">${fmt(o.submitted_at)}</div>
     <div><span class="status-badge ${status}"><span class="sdot"></span>${sLabel[status]||status}</span></div>
