@@ -571,6 +571,53 @@ const DEMO = [
 // ── STATE ──
 let allOrders = [], currentFilter = 'all', pendingRef = null, usingDemo = false, toastTimer, openRef = null;
 
+// ── N8N FIELD NORMALIZER ──
+function normalizeOrder(raw) {
+  const ref = (raw['ORDER REFERENCE'] || raw.order_ref || raw.ref || '').trim();
+  if (!ref) return null; // skip blank rows
+
+  const payConfirm  = (raw['PAYMENT_CONFIRM'] || '').toLowerCase().trim();
+  const statusField = (raw['STATUS'] || '').toLowerCase().trim();
+  const method      = (raw['PAYMENT METHOD'] || raw.payment_method || '').toLowerCase().trim();
+
+  let status;
+  if (statusField.includes('paid') || statusField.includes('confirm')) status = 'paid';
+  else if (statusField.includes('cancel'))                               status = 'cancelled';
+  else if (method === 'paypal')                                          status = 'paid';
+  else if (payConfirm.includes('pending'))                               status = 'pending';
+  else                                                                   status = 'pending';
+
+  const rawTotal  = raw['ORDER TOTAL '] ?? raw['ORDER TOTAL'] ?? raw.order_total ?? 0;
+  const totalNum  = parseFloat(rawTotal) || 0;
+  const orderTotal = (typeof rawTotal === 'string' && rawTotal.includes('$'))
+    ? rawTotal
+    : `$${totalNum.toFixed(2)}`;
+
+  const paypalTx = (raw['PAYPAL TRANSACTION  ID'] || raw['PAYPAL TRANSACTION ID'] || raw.paypal_transaction_id || '').trim();
+
+  return {
+    order_ref:            ref,
+    submitted_at:         raw['SUBMITTED AT'] || raw.submitted_at || null,
+    first_name:           raw['FIRST NAME']   || raw.first_name   || '',
+    last_name:            raw['LAST NAME']    || raw.last_name    || '',
+    email:                raw['EMAIL']        || raw.email        || '',
+    phone:                raw['PHONE']        || raw.phone        || '',
+    destination_country:  raw['DESTINATION_COUNTRY'] || raw.destination_country || '',
+    plan_label:           raw['PLAN LABEL']   || raw.plan_label   || '',
+    order_total:          orderTotal,
+    doc_count:            String(raw['DOCUMENT COUNT'] || raw.doc_count || '1'),
+    payment_method:       method === 'paypal' ? 'paypal' : 'zelle',
+    paypal_transaction_id: (paypalTx && paypalTx !== '—') ? paypalTx : null,
+    status,
+    confirmed_at:         raw.confirmed_at || null,
+    zelle_to:             (raw['ZELLE PAYMENT TO '] || raw['ZELLE PAYMENT TO'] || '').trim() || null,
+    drive_link:           (raw['DRIVE FOLDER LINK'] || '').trim() || null,
+    admin_notes:          (raw['ADMIN NOTES'] || '').trim() || null,
+    return_name:          raw['RETURN NAME'] || null,
+    return_address:       [raw['RETURN ADDRESS'], raw['RETURN CITY'], raw['RETURN STATE']].filter(Boolean).join(', ') || null,
+  };
+}
+
 // ── LOAD ──
 async function loadOrders() {
   const icon = document.getElementById('ri');
@@ -592,7 +639,8 @@ async function loadOrders() {
     try {
       const res  = await fetch(FETCH_ORDERS_URL);
       const data = await res.json();
-      allOrders  = Array.isArray(data) ? data : (data.orders || data.data || []);
+      const raw  = Array.isArray(data) ? data : (data.orders || data.data || []);
+      allOrders  = raw.map(normalizeOrder).filter(Boolean);
     } catch {
       showToast('Could not reach n8n — check FETCH_ORDERS_URL', 'error');
       return;
@@ -743,9 +791,12 @@ function ovHTML(o) {
       <div class="ov-field"><span class="ov-key">Docs</span><span class="ov-val">${o.doc_count||'1'} document${parseInt(o.doc_count||1)!==1?'s':''}</span></div>
       <div class="ov-field"><span class="ov-key">Country</span><span class="ov-val">${flag(o.destination_country)} ${o.destination_country||'—'}</span></div>
       <div class="ov-field"><span class="ov-key">Method</span><span class="ov-val">${isZ?'Zelle':'PayPal'}</span></div>
+      ${isZ && o.zelle_to ? `<div class="ov-field"><span class="ov-key">Zelle To</span><span class="ov-val" style="font-family:var(--font-m);font-size:11px;color:var(--zelle)">${o.zelle_to}</span></div>` : ''}
       ${o.paypal_transaction_id?`<div class="ov-field"><span class="ov-key">Tx ID</span><span class="ov-val" style="font-family:var(--font-m);font-size:11px">${o.paypal_transaction_id}</span></div>`:''}
       <div class="ov-field"><span class="ov-key">Submitted</span><span class="ov-val" style="font-size:11.5px">${fmt(o.submitted_at)}</span></div>
+      ${o.drive_link ? `<div class="ov-field" style="margin-top:6px"><span class="ov-key">Drive</span><span class="ov-val"><a href="${o.drive_link}" target="_blank" rel="noopener" style="color:var(--paypal);font-size:11.5px;text-decoration:none">Open folder ↗</a></span></div>` : ''}
     </div>
+    ${o.admin_notes ? `<div class="ov-section full"><div class="ov-label">Admin Notes</div><div style="font-size:12.5px;color:var(--text);line-height:1.6">${o.admin_notes}</div></div>` : ''}
     ${acts}
   </div>`;
 }
