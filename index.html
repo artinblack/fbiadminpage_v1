@@ -186,7 +186,7 @@ body {
 /* Table grid definition */
 .tgrid {
   display: grid;
-  grid-template-columns: 140px 1fr 86px 108px 155px 130px 98px 180px;
+  grid-template-columns: 140px 1fr 86px 108px 155px 130px 98px 180px 88px;
   gap: 0 12px; align-items: center;
 }
 
@@ -273,6 +273,16 @@ body {
   transition: background .15s;
 }
 .btn-rc:hover { background: var(--red-bg); }
+
+/* ── ROW DRIVE LINK ── */
+.btn-drive {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 9px; border-radius: 6px; font-size: 11px; font-weight: 600;
+  background: rgba(56,189,248,.07); border: 1px solid rgba(56,189,248,.18); color: var(--paypal);
+  text-decoration: none; white-space: nowrap; font-family: var(--font-b);
+  transition: background .15s, border-color .15s;
+}
+.btn-drive:hover { background: rgba(56,189,248,.16); border-color: rgba(56,189,248,.35); }
 
 /* ── EMPTY STATE ── */
 .empty-state { padding: 5rem 2rem; text-align: center; color: var(--text-dim); }
@@ -413,14 +423,14 @@ body {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
-  .tgrid { grid-template-columns: 140px 1fr 86px 108px 98px 170px; }
+  .tgrid { grid-template-columns: 140px 1fr 86px 108px 98px 160px 88px; }
   .col-submitted, .col-country-h { display: none; }
 }
 @media (max-width: 860px) {
   .tgrid { grid-template-columns: 1fr auto; gap: 8px; }
   .table-head { display: none; }
   .order-row { padding: 12px 16px; }
-  .col-method, .col-amount, .col-country-h, .col-submitted { display: none; }
+  .col-method, .col-amount, .col-country-h, .col-submitted, .col-drive { display: none; }
   .row-acts { flex-direction: column; gap: 4px; }
 }
 @media (max-width: 700px) {
@@ -506,6 +516,7 @@ body {
         <div class="col-submitted">Submitted</div>
         <div>Status</div>
         <div>Actions</div>
+        <div class="col-drive">Drive</div>
       </div>
       <div id="orders-container"></div>
       <div id="order-overlay" style="display:none"></div>
@@ -748,6 +759,13 @@ function rowHTML(o, idx) {
       </div>`
     : '<div></div>';
 
+  const driveCell = o.drive_link
+    ? `<div class="col-drive"><a class="btn-drive" href="${o.drive_link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        View
+      </a></div>`
+    : `<div class="col-drive"></div>`;
+
   return `<div class="tgrid order-row s-${status}" style="animation-delay:${idx*.065}s" onclick="openOverlay('${ref}')">
     <div class="cell-ref"><span class="ref-id">${ref}</span><span class="ref-time">${fmtS(o.submitted_at)}</span></div>
     <div class="cell-customer"><span class="cust-name">${o.first_name||''} ${o.last_name||''}</span><span class="cust-email">${o.email||'—'}</span>${o.phone?`<span class="cust-phone">${o.phone}</span>`:''}</div>
@@ -757,6 +775,7 @@ function rowHTML(o, idx) {
     <div class="cell-submitted col-submitted">${fmt(o.submitted_at)}</div>
     <div><span class="status-badge ${status}"><span class="sdot"></span>${sLabel[status]||status}</span></div>
     ${actionsCell}
+    ${driveCell}
   </div>`;
 }
 
