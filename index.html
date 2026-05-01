@@ -187,7 +187,7 @@ body {
 /* Table grid definition */
 .tgrid {
   display: grid;
-  grid-template-columns: 140px 1fr 86px 108px 155px 130px 98px 180px 88px;
+  grid-template-columns: 140px 1fr 86px 100px 100px 100px 140px 120px 98px 170px 80px;
   gap: 0 12px; align-items: center;
 }
 
@@ -423,15 +423,19 @@ body {
 .toast.error   { border-color: var(--red-bd);   background: rgba(240,82,82,.07);  color: var(--red);   }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 1200px) {
-  .tgrid { grid-template-columns: 140px 1fr 86px 108px 98px 160px 88px; }
+@media (max-width: 1300px) {
+  .tgrid { grid-template-columns: 140px 1fr 86px 100px 100px 100px 98px 170px 80px; }
   .col-submitted, .col-country-h { display: none; }
+}
+@media (max-width: 1000px) {
+  .tgrid { grid-template-columns: 140px 1fr 86px 100px 100px 100px 98px 170px; }
+  .col-drive { display: none; }
 }
 @media (max-width: 860px) {
   .tgrid { grid-template-columns: 1fr auto; gap: 8px; }
   .table-head { display: none; }
   .order-row { padding: 12px 16px; }
-  .col-method, .col-amount, .col-country-h, .col-submitted, .col-drive { display: none; }
+  .col-method, .col-amount, .col-amtpaid, .col-dueamt, .col-country-h, .col-submitted, .col-drive { display: none; }
   .row-acts { flex-direction: column; gap: 4px; }
 }
 @media (max-width: 700px) {
@@ -509,7 +513,9 @@ body {
         <div>Order Ref</div>
         <div>Customer</div>
         <div>Method</div>
-        <div>Amount</div>
+        <div class="col-amount">Amount</div>
+        <div class="col-amtpaid">Amt Paid</div>
+        <div class="col-dueamt">Due</div>
         <div class="col-country-h">Destination</div>
         <div class="col-submitted">Submitted</div>
         <div>Status</div>
@@ -623,6 +629,17 @@ function normalizeOrder(raw) {
     ? rawTotal
     : `$${totalNum.toFixed(2)}`;
 
+  const fmtAmt = v => {
+    if (!v && v !== 0) return null;
+    const s = String(v).trim();
+    if (!s || s === '0' || s === '$0' || s === '$0.00') return null;
+    const n = parseFloat(s.replace(/[^0-9.-]/g, ''));
+    if (isNaN(n) || n === 0) return null;
+    return s.includes('$') ? s : `$${n.toFixed(2)}`;
+  };
+  const amountPaid = fmtAmt(raw['AMOUNT PAID'] ?? raw['PAID AMOUNT'] ?? raw.amount_paid ?? null);
+  const dueAmount  = fmtAmt(raw['DUE AMOUNT'] ?? raw['AMOUNT DUE'] ?? raw['BALANCE DUE'] ?? raw.due_amount ?? null);
+
   const paypalTx = (raw['PAYPAL TRANSACTION  ID'] || raw['PAYPAL TRANSACTION ID'] || raw.paypal_transaction_id || '').trim();
 
   return {
@@ -635,6 +652,8 @@ function normalizeOrder(raw) {
     destination_country:  raw['DESTINATION_COUNTRY'] || raw.destination_country || '',
     plan_label:           raw['PLAN LABEL']   || raw.plan_label   || '',
     order_total:          orderTotal,
+    amount_paid:          amountPaid,
+    due_amount:           dueAmount,
     doc_count:            String(raw['DOCUMENT COUNT'] || raw.doc_count || '1'),
     payment_method:       method === 'paypal' ? 'paypal' : 'zelle',
     paypal_transaction_id: (paypalTx && paypalTx !== '—') ? paypalTx : null,
@@ -769,6 +788,8 @@ function rowHTML(o, idx) {
     <div class="cell-customer"><span class="cust-name">${o.first_name||''} ${o.last_name||''}</span><span class="cust-email">${o.email||'—'}</span>${o.phone?`<span class="cust-phone">${o.phone}</span>`:''}</div>
     <div class="col-method"><span class="method-badge ${isZ?'zelle':'paypal'}">${isZ?'Zelle':'PayPal'}</span></div>
     <div class="cell-amount col-amount"><span class="amt-val">${o.order_total||'—'}</span><span class="amt-plan">${o.plan_label||'—'}</span></div>
+    <div class="col-amtpaid"><span class="amt-val" style="font-size:13px;color:${o.amount_paid?'var(--green)':'var(--text-faint)'}">${o.amount_paid||'—'}</span></div>
+    <div class="col-dueamt"><span class="amt-val" style="font-size:13px;color:${o.due_amount?'var(--amber)':'var(--text-faint)'}">${o.due_amount||'—'}</span></div>
     <div class="cell-country col-country-h"><span class="cflag">${flag(o.destination_country)}</span><span>${o.destination_country||'—'}</span></div>
     <div class="cell-submitted col-submitted">${fmt(o.submitted_at)}</div>
     <div><span class="status-badge ${status}"><span class="sdot"></span>${sLabel[status]||status}</span></div>
