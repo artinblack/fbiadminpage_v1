@@ -37,6 +37,54 @@
   --font-b: 'Outfit', sans-serif;
   --font-m: 'JetBrains Mono', monospace;
 }
+/* ── LIGHT THEME ── */
+[data-theme="light"] {
+  --bg:         #eef2fa;
+  --bg-card:    #ffffff;
+  --bg-row:     rgba(0,0,0,.018);
+  --bg-row-h:   rgba(0,0,0,.042);
+  --border:     rgba(0,0,0,.08);
+  --border-hi:  rgba(0,0,0,.14);
+  --text:       #192135;
+  --text-dim:   #556678;
+  --text-faint: #99aabb;
+  --green-bg:   rgba(14,203,132,.10);
+  --green-bd:   rgba(14,203,132,.30);
+  --amber-bg:   rgba(245,166,35,.10);
+  --amber-bd:   rgba(245,166,35,.30);
+  --red-bg:     rgba(240,82,82,.10);
+  --red-bd:     rgba(240,82,82,.30);
+  --zelle-bg:   rgba(139,92,246,.10);
+  --zelle-bd:   rgba(139,92,246,.32);
+  --paypal-bg:  rgba(56,189,248,.10);
+  --paypal-bd:  rgba(56,189,248,.32);
+}
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -5%, rgba(59,130,246,.08), transparent),
+    linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
+}
+[data-theme="light"] .topbar {
+  background: rgba(238,242,250,.93);
+  border-bottom-color: rgba(0,0,0,.09);
+}
+[data-theme="light"] .auth-screen::before {
+  background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(59,130,246,.07), transparent);
+}
+[data-theme="light"] .auth-card {
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 40px 80px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.9);
+}
+[data-theme="light"] .modal {
+  box-shadow: 0 40px 80px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.8);
+}
+[data-theme="light"] .order-overlay {
+  background: rgba(238,242,250,.92);
+}
+[data-theme="light"] .toast {
+  box-shadow: 0 16px 40px rgba(0,0,0,.12);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: var(--font-b);
@@ -48,6 +96,7 @@ body {
     linear-gradient(rgba(59,130,246,.022) 1px, transparent 1px),
     linear-gradient(90deg, rgba(59,130,246,.022) 1px, transparent 1px);
   background-size: 100% 100%, 56px 56px, 56px 56px;
+  transition: background-color .25s, color .25s;
 }
 
 /* ── AUTH ── */
@@ -488,6 +537,7 @@ body {
       <a class="btn-tb" href="https://docs.google.com/spreadsheets/d/1a-6Pp3d2Z8PRIzKnljbxTE3stOD5zAHD_CxARa4KVZI/edit?gid=0#gid=0" target="_blank" rel="noopener">
         <img src="brand_assets/sheets.png" alt=""/> Sheets
       </a>
+      <button class="btn-tb" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme"></button>
       <div class="topbar-sep"></div>
       <div id="topbar-user"></div>
       <button class="btn-logout" onclick="logout()">Sign Out</button>
@@ -950,6 +1000,23 @@ function saveOv(ref, status, confirmed_at = null) {
   localStorage.setItem('fbi_overrides', JSON.stringify(ov));
 }
 
+// ── THEME ──
+const MOON_SVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+const SUN_SVG  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+
+function updateThemeBtn() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.innerHTML = isLight ? `${MOON_SVG} Dark` : `${SUN_SVG} Light`;
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  localStorage.setItem('fbi_theme', isLight ? 'dark' : 'light');
+  updateThemeBtn();
+}
+
 // ── TOAST ──
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
@@ -978,6 +1045,9 @@ function initGoogleAuth() {
 }
 
 (function init() {
+  const savedTheme = localStorage.getItem('fbi_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeBtn();
   if (isLoggedIn()) {
     showDashboard();
   } else {
