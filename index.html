@@ -632,13 +632,14 @@ function normalizeOrder(raw) {
   const fmtAmt = v => {
     if (!v && v !== 0) return null;
     const s = String(v).trim();
-    if (!s || s === '0' || s === '$0' || s === '$0.00') return null;
+    if (!s || s === '—' || s === '-' || s === '0' || s === '$0' || s === '$0.00') return null;
     const n = parseFloat(s.replace(/[^0-9.-]/g, ''));
     if (isNaN(n) || n === 0) return null;
     return s.includes('$') ? s : `$${n.toFixed(2)}`;
   };
-  const amountPaid = fmtAmt(raw['AMOUNT PAID'] ?? raw['PAID AMOUNT'] ?? raw.amount_paid ?? null);
-  const dueAmount  = fmtAmt(raw['DUE AMOUNT'] ?? raw['AMOUNT DUE'] ?? raw['BALANCE DUE'] ?? raw.due_amount ?? null);
+  const isPaypal = method === 'paypal';
+  const amountPaid = fmtAmt(isPaypal ? (raw['PAYPAL PAID NOW'] ?? null) : (raw['ZELLE PAID NOW'] ?? null));
+  const dueAmount  = fmtAmt(isPaypal ? (raw['PAYPAL DUE AMOUNT'] ?? null) : (raw['ZELLE DUE AMOUNT'] ?? null));
 
   const paypalTx = (raw['PAYPAL TRANSACTION  ID'] || raw['PAYPAL TRANSACTION ID'] || raw.paypal_transaction_id || '').trim();
 
